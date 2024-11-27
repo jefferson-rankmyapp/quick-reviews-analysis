@@ -29,6 +29,7 @@ def process_data(file):
     # Total de Reviews e Média Geral (Rating)
     total_reviews = df.shape[0]
     average_rating = df['Rating'].mean()
+    average_sla = df['SLA'].mean()
 
     # Total e Percentual por Channel
     channel_distribution = df['Channel'].value_counts(normalize=True).reset_index()
@@ -80,6 +81,7 @@ def process_data(file):
     return {
         "Total Reviews": total_reviews,
         "Average Rating": average_rating.round(2),
+        "Average SLA": average_sla.round(2),
         "Channel Distribution": channel_distribution.round(2),
         "Status Distribution": status_distribution.round(2),
         "Rating Distribution": rating_distribution.round(2),
@@ -103,29 +105,29 @@ def main():
 
         # Mostrar métricas principais
         st.subheader("Resumo Geral")
-        st.metric("Total de Reviews", results["Total Reviews"])
-        st.metric("Média Geral de Rating", round(results["Average Rating"], 2))
+        col1, col2, col3 = st.columns(3)  # Criar duas colunas
+
+        with col1:
+            st.metric("Total de Reviews", results["Total Reviews"])
+        with col2:
+            st.metric("Média Geral de Rating", round(results["Average Rating"], 2))
+        with col3:
+            st.metric("Média Geral de SLA", round(results["Average SLA"], 2))
 
         # Mostrar distribuições
-        st.subheader("Distribuições")
-        st.write("### Por Canal")
-        st.dataframe(results["Channel Distribution"])
-
         fig = create_bar_chart(
             results["Channel Distribution"],
             x_col="Channel",
             y_col="Count",
             text_col="Percentage",
-            title="Distribuição por Canal",
-            labels={"Channel": "Canal", "Count": "Número de Reviews"}
+            title="Distribuição por Loja",
+            labels={"Channel": "Loja", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
+        st.dataframe(results["Channel Distribution"])
 
-        st.write("### Por Status")
-        st.dataframe(results["Status Distribution"])
-
+        
         # Exibir Gráfico de Pizza para Distribuição por Status
-        st.write("### Distribuição por Status")
         fig_status = create_pie_chart(
             results["Status Distribution"],
             values_col="Count",
@@ -134,12 +136,9 @@ def main():
             labels={"Status": "Status", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig_status)
-
-        st.write("### Por Rating")
-        st.dataframe(results["Rating Distribution"])
+        st.dataframe(results["Status Distribution"])
 
         # Exibir gráfico de Distribuição por Rating
-        st.write("### Distribuição por Rating")
         fig_rating = create_bar_chart(
             results["Rating Distribution"],
             x_col="Rating",
@@ -149,9 +148,7 @@ def main():
             labels={"Rating": "Rating (⭐)", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig_rating)
-
-        st.write("### Por Sentimento")
-        st.dataframe(results["Sentiment Distribution"])
+        st.dataframe(results["Rating Distribution"])
 
         fig = create_bar_chart(
             results["Sentiment Distribution"],
@@ -162,9 +159,7 @@ def main():
             labels={"Sentiment": "Sentimento", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
-
-        st.write("### Por Categoria")
-        st.dataframe(results["Category Distribution"])
+        st.dataframe(results["Sentiment Distribution"])
 
         fig = create_bar_chart(
             results["Category Distribution"],
@@ -175,9 +170,8 @@ def main():
             labels={"Category": "Categoria", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
+        st.dataframe(results["Category Distribution"])
 
-        st.write("### Por Subcategoria")
-        st.dataframe(results["Subcategory Distribution"])
 
         fig = create_bar_chart(
             results["Subcategory Distribution"],
@@ -188,9 +182,7 @@ def main():
             labels={"Subcategory": "Subcategoria", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
-
-        st.write("### Por Detailing")
-        st.dataframe(results["Detailing Distribution"])
+        st.dataframe(results["Subcategory Distribution"])
 
         fig = create_bar_chart(
             results["Detailing Distribution"],
@@ -201,16 +193,7 @@ def main():
             labels={"Detailing": "Detalhamentos", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
-
-
-
-        # Mostrar análise textual
-        # st.subheader("Análise Textual")
-        # st.write("### Principais Palavras-Chave e Bigramas - Sentimentos Positivos")
-        # st.write(results["Positive Keywords and Bigrams"])
-
-        # st.write("### Principais Palavras-Chave e Bigramas - Sentimentos Negativos")
-        # st.write(results["Negative Keywords and Bigrams"])
+        st.dataframe(results["Detailing Distribution"])
 
         # Exibir bigramas de forma legível
         st.write("### Principais keywords dos reviews positivos")
