@@ -95,6 +95,12 @@ def process_data(file):
 
 # Função principal do Streamlit
 def main():
+
+    st.set_page_config(
+        page_title="RI Quick Analysis",
+        page_icon="📊",
+        layout="wide",
+    )
     st.title("Análise Rápida de Reviews")
 
     uploaded_file = st.file_uploader("Faça upload do arquivo de reviews (.xlsx)", type="xlsx")
