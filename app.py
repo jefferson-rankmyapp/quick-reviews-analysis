@@ -26,6 +26,11 @@ def extract_keywords_and_bigrams(text_series, top_n=10):
 # Função para carregar o arquivo e processar os dados
 def process_data(file):
     df = pd.read_excel(file)
+
+    # Remover espaços extras no início e fim das strings da coluna 'Subcategory'
+    df['Subcategory'] = df['Subcategory'].str.strip()
+    df['Detailing'] = df['Detailing'].str.strip()
+    
     # Total de Reviews e Média Geral (Rating)
     total_reviews = df.shape[0]
     average_rating = df['Rating'].mean()
@@ -60,9 +65,30 @@ def process_data(file):
     subcategory_distribution.columns = ['Subcategory', 'Percentage']
     subcategory_distribution['Count'] = df['Subcategory'].value_counts().values
 
+    # Criar DataFrame filtrado apenas para subcategorias positivos
+    subcategory_positive = df[df['Sentiment'] == 'Positive']['Subcategory'].value_counts(normalize=True).reset_index()
+    subcategory_positive.columns = ['Subcategory', 'Percentage']
+    subcategory_positive['Count'] = df[df['Sentiment'] == 'Positive']['Subcategory'].value_counts().values
+
+    # Criar DataFrame filtrado apenas para subcategorias negativos
+    subcategory_negative = df[df['Sentiment'] == 'Negative']['Subcategory'].value_counts(normalize=True).reset_index()
+    subcategory_negative.columns = ['Subcategory', 'Percentage']
+    subcategory_negative['Count'] = df[df['Sentiment'] == 'Negative']['Subcategory'].value_counts().values
+
+
     detailing_distribution = df['Detailing'].value_counts(normalize=True).reset_index()
     detailing_distribution.columns = ['Detailing', 'Percentage']
     detailing_distribution['Count'] = df['Detailing'].value_counts().values
+
+    # Criar DataFrame filtrado apenas para Detailing positivos
+    detailing_positive = df[df['Sentiment'] == 'Positive']['Detailing'].value_counts(normalize=True).reset_index()
+    detailing_positive.columns = ['Detailing', 'Percentage']
+    detailing_positive['Count'] = df[df['Sentiment'] == 'Positive']['Detailing'].value_counts().values
+
+    # Criar DataFrame filtrado apenas para Detailing negativos
+    detailing_negative = df[df['Sentiment'] == 'Negative']['Detailing'].value_counts(normalize=True).reset_index()
+    detailing_negative.columns = ['Detailing', 'Percentage']
+    detailing_negative['Count'] = df[df['Sentiment'] == 'Negative']['Detailing'].value_counts().values
 
     channel_distribution['Percentage'] *= 100
     status_distribution['Percentage'] *= 100
@@ -70,7 +96,11 @@ def process_data(file):
     sentiment_distribution['Percentage'] *= 100
     category_distribution['Percentage'] *= 100
     subcategory_distribution['Percentage'] *= 100
+    subcategory_positive['Percentage'] *= 100
+    subcategory_negative['Percentage'] *= 100
     detailing_distribution['Percentage'] *= 100
+    detailing_positive['Percentage'] *= 100
+    detailing_negative['Percentage'] *= 100
 
     # Análise textual
     positive_reviews = df[df['Sentiment'].str.lower().isin(['positivo', 'positive'])]['Review']
@@ -81,14 +111,19 @@ def process_data(file):
     return {
         "Total Reviews": total_reviews,
         "Average Rating": average_rating.round(2),
-        "Average SLA": average_sla.round(2),
+        # "Average SLA": average_sla.round(2),
+        "Average SLA": round(average_sla, 2) if isinstance(average_sla, (int, float)) else 0,
         "Channel Distribution": channel_distribution.round(2),
         "Status Distribution": status_distribution.round(2),
         "Rating Distribution": rating_distribution.round(2),
         "Sentiment Distribution": sentiment_distribution.round(2),
         "Category Distribution": category_distribution.round(2),
         "Subcategory Distribution": subcategory_distribution.round(2),
+        "Subcategory Positive": subcategory_positive.round(2),
+        "Subcategory Negative": subcategory_negative.round(2),
         "Detailing Distribution": detailing_distribution.round(2),
+        "Detailing Positive": detailing_positive.round(2),
+        "Detailing Negative": detailing_negative.round(2),
         "Positive Keywords and Bigrams": positive_keywords_bigrams,
         "Negative Keywords and Bigrams": negative_keywords_bigrams,
     }
@@ -118,7 +153,7 @@ def main():
         with col2:
             st.metric("Média Geral de Rating", round(results["Average Rating"], 2))
         with col3:
-            st.metric("Média Geral de SLA", round(results["Average SLA"], 2))
+            st.metric("Média Geral de SLA", 0 if pd.isna(results["Average SLA"]) else round(results["Average SLA"], 2))
 
         # Mostrar distribuições
         fig = create_bar_chart(
@@ -179,27 +214,71 @@ def main():
         st.dataframe(results["Category Distribution"])
 
 
+        # fig = create_bar_chart(
+        #     results["Subcategory Distribution"],
+        #     x_col="Subcategory",
+        #     y_col="Count",
+        #     text_col="Percentage",
+        #     title="Distribuição por Subcategoria",
+        #     labels={"Subcategory": "Subcategoria", "Count": "Número de Reviews"}
+        # )
+        # st.plotly_chart(fig)
+        # st.dataframe(results["Subcategory Distribution"])
+
         fig = create_bar_chart(
-            results["Subcategory Distribution"],
+            results["Subcategory Positive"],
             x_col="Subcategory",
             y_col="Count",
             text_col="Percentage",
-            title="Distribuição por Subcategoria",
+            title="Distribuição por Subcategoria (Positivas)",
             labels={"Subcategory": "Subcategoria", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
-        st.dataframe(results["Subcategory Distribution"])
+        st.dataframe(results["Subcategory Positive"])
 
         fig = create_bar_chart(
-            results["Detailing Distribution"],
+            results["Subcategory Negative"],
+            x_col="Subcategory",
+            y_col="Count",
+            text_col="Percentage",
+            title="Distribuição por Subcategoria (Negativas)",
+            labels={"Subcategory": "Subcategoria", "Count": "Número de Reviews"}
+        )
+        st.plotly_chart(fig)
+        st.dataframe(results["Subcategory Negative"])
+
+        # fig = create_bar_chart(
+        #     results["Detailing Distribution"],
+        #     x_col="Detailing",
+        #     y_col="Count",
+        #     text_col="Percentage",
+        #     title="Distribuição por Detalhamentos",
+        #     labels={"Detailing": "Detalhamentos", "Count": "Número de Reviews"}
+        # )
+        # st.plotly_chart(fig)
+        # st.dataframe(results["Detailing Distribution"])
+
+        fig = create_bar_chart(
+            results["Detailing Positive"],
             x_col="Detailing",
             y_col="Count",
             text_col="Percentage",
-            title="Distribuição por Detalhamentos",
+            title="Distribuição por Detalhamentos (Positivas)",
             labels={"Detailing": "Detalhamentos", "Count": "Número de Reviews"}
         )
         st.plotly_chart(fig)
-        st.dataframe(results["Detailing Distribution"])
+        st.dataframe(results["Detailing Positive"])
+
+        fig = create_bar_chart(
+            results["Detailing Negative"],
+            x_col="Detailing",
+            y_col="Count",
+            text_col="Percentage",
+            title="Distribuição por Detalhamentos (Negativas)",
+            labels={"Detailing": "Detalhamentos", "Count": "Número de Reviews"}
+        )
+        st.plotly_chart(fig)
+        st.dataframe(results["Detailing Negative"])
 
         # Exibir bigramas de forma legível
         st.write("### Principais keywords dos reviews positivos")
